@@ -4,7 +4,10 @@
   "description": "ElasticSearch store for modeler.",
   "main": "api.js",
   "dependencies": {
-    "modeler": "~0.4.3"
+    "modeler": "~0.4.3",
+    "request": "~2.25.0",
+    "retry": "~0.6.0",
+    "hydration": "~0.5.0"
   },
   "devDependencies": {
     "mocha": "*"
