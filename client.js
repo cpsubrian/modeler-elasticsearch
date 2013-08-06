@@ -135,6 +135,10 @@ ElasticSearchClient.prototype.deleteIndex = function (options, cb) {
 };
 
 ElasticSearchClient.prototype.refreshIndex = function (options, cb) {
+  if (arguments.length === 1) {
+    cb = options;
+    options = {};
+  }
   var path = '/' + (options.index || this._index);
   path += '/_refresh';
   this.exec({path: path, method: 'POST', data: options.data}, cb);
