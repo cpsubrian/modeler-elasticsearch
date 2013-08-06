@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "description": "ElasticSearch store for modeler.",
   "main": "api.js",
-  "dependencies": {},
+  "dependencies": {
+    "modeler": "~0.4.3"
+  },
   "devDependencies": {
     "mocha": "*"
   },

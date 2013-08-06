@@ -1,3 +1,1 @@
-describe('basic test', function () {
-  it('works');
-});
+require('modeler/test/basic');
