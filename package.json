@@ -1,0 +1,24 @@
+{
+  "name": "modeler-elasticsearch",
+  "version": "0.0.0",
+  "description": "ElasticSearch store for modeler.",
+  "main": "api.js",
+  "dependencies": {},
+  "devDependencies": {
+    "mocha": "*"
+  },
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/cpsubrian/modeler-elasticsearch.git"
+  },
+  "homepage": "https://github.com/cpsubrian/modeler-elasticsearch",
+  "keywords": [
+    "modeler",
+    "elasticsearch"
+  ],
+  "author": "Brian Link <cpsubrian@gmail.com>",
+  "license": "MIT"
+}
