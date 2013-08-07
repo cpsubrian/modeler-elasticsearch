@@ -2,7 +2,8 @@ var formatUrl = require('url').format
   , querystring = require('querystring')
   , request = require('request')
   , retry = require('retry')
-  , Memcached = require('memcached');
+  , Memcached = require('memcached')
+  , hype = require('hyperquestionable');
 
 module.exports = ElasticSearchClient;
 
@@ -33,6 +34,10 @@ function ElasticSearchClient(options) {
     self._memcachedHost = options.memcachedHost || self._host;
     self._memcachedPort = options.memcachedPort || 11211;
     self._memcached = new Memcached(self._memcachedHost + ':' + self._memcachedPort);
+  }
+
+  if (options.hyperquest) {
+    self._hyperquest = true;
   }
 }
 
@@ -186,7 +191,7 @@ ElasticSearchClient.prototype.execREST = function (params, cb) {
   //Retry settings
   var operation = retry.operation(self._retry);
   operation.attempt( function (attemptNum) {
-    request(requestOptions, function (err, resp, body) {
+    self.request(requestOptions, function (err, resp, body) {
       var details = {attempts: attemptNum, request: requestOptions};
 
       //Retry the operation on error
@@ -226,6 +231,28 @@ ElasticSearchClient.prototype.execREST = function (params, cb) {
       }
     });
   });
+};
+
+ElasticSearchClient.prototype.request = function (options, cb) {
+  if (this._hyperquest) {
+    var url = formatUrl({
+      pathname: options.uri,
+      query: options.qs || {}
+    });
+    hype(url, options, function (err, body, res) {
+      if (err) return cb(err);
+      try {
+        body = JSON.parse(body);
+      }
+      catch (e) {
+        return cb(err);
+      }
+      cb(err, res, body);
+    });
+  }
+  else {
+    request(options, cb);
+  }
 };
 
 ElasticSearchClient.prototype.execMemcached = function (params, cb) {

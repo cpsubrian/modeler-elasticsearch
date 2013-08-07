@@ -14,6 +14,11 @@ var mcollection = require('../')({
   index: index,
   memcached: true
 });
+var hcollection = require('../')({
+  name: 'doodads',
+  index: index,
+  hyperquest: true
+});
 
 var client = collection.client;
 
@@ -55,6 +60,9 @@ exports.compare = {
   },
   'Memcached': function (done) {
     mcollection.load(Math.floor(Math.random() * size), done);
+  },
+  'Hyperquest': function (done) {
+    hcollection.load(Math.floor(Math.random() * size), done);
   }
 };
 
