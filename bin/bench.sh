@@ -7,33 +7,25 @@ var bench = require('bench')
 // Create ES clients.
 var collection = require('../')({
   name: 'doodads',
-  index: index
+  client: require('elasticsearch')({
+    _index: index,
+  })
 });
 var mcollection = require('../')({
   name: 'doodads',
-  index: index,
-  memcached: true
-});
-var hcollection = require('../')({
-  name: 'doodads',
-  index: index,
-  hyperquest: true
-});
-var elasticsearch = require('elasticsearch')({
-  _index: index,
-  _type: 'doodads'
+  client: require('elasticsearch')({
+    _index: index,
+  })
 });
 
 var client = collection.client;
 
 // Setup index.
-client.createIndex(function (err) {
+client.indices.createIndex(function (err) {
   if (err) throw err;
-  client.exec({
-    path: '/_cluster/health/' + collection.options.index,
-    qs: {
-      wait_for_status: 'yellow'
-    }
+  client.cluster.health({
+    _index: index,
+    wait_for_status: 'yellow'
   }, function (err) {
     if (err) throw err;
 
@@ -49,7 +41,7 @@ client.createIndex(function (err) {
     stack.runSeries(function (err) {
       if (err) throw err;
       console.log('');
-      client.refreshIndex(function (err) {
+      client.indices.refresh(function (err) {
         if (err) throw err;
         bench.runMain();
       });
@@ -59,24 +51,20 @@ client.createIndex(function (err) {
 
 // Things to compare...
 exports.compare = {
-  'REST': function (done) {
+  'elasticsearch': function (done) {
     collection.load(Math.floor(Math.random() * size), done);
   },
-  'Memcached': function (done) {
+  'elasticsearch-memcache': function (done) {
     mcollection.load(Math.floor(Math.random() * size), done);
-  },
-  'Hyperquest': function (done) {
-    hcollection.load(Math.floor(Math.random() * size), done);
-  },
-  'elasticsearch': function (done) {
-    elasticsearch.get({_id: Math.floor(Math.random() * size)}, done);
   }
 };
 
 // Cleanup.
 exports.done = function (data) {
-  client.deleteIndex(function (err) {
-    if (err) throw err;
-    bench.show(data);
+  client.indices.refresh(function (err) {
+    client.indices.deleteIndex({_index: index}, function (err) {
+      if (err) throw err;
+      bench.show(data);
+    });
   });
 };
