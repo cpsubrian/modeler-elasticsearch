@@ -19,6 +19,10 @@ var hcollection = require('../')({
   index: index,
   hyperquest: true
 });
+var elasticsearch = require('elasticsearch')({
+  _index: index,
+  _type: 'doodads'
+});
 
 var client = collection.client;
 
@@ -63,6 +67,9 @@ exports.compare = {
   },
   'Hyperquest': function (done) {
     hcollection.load(Math.floor(Math.random() * size), done);
+  },
+  'elasticsearch': function (done) {
+    elasticsearch.get({_id: Math.floor(Math.random() * size)}, done);
   }
 };
 
