@@ -3,47 +3,34 @@ util = require('util');
 modeler = require('../');
 
 index = 'modeler_elasticsearch_test_' + Date.now();
-client = new (require('../client'))({
-  index: index,
-  memcached: true,
-  refresh: {
-    index: true,
-    update: true,
-    delete: true
-  }
+client = require('elasticsearch')({
+  _index: index
 });
 extraOptions = {
-  client: client
+  client: client,
+  refresh: true
 };
 
 setUp = function (done) {
-  client.createIndex(function (err) {
+  client.indices.createIndex(function (err) {
     if (err) return done(err);
-    client.exec({
-      path: '/_cluster/health/' + index,
-      qs: {
-        wait_for_status: 'yellow'
-      }
+    client.cluster.health({
+      _index: index,
+      wait_for_status: 'yellow'
     }, function (err) {
       if (err) return done(err);
-      client.createMapping({
-        type: 'apples',
-        data: {
-          apples: {
-            _timestamp: {
-              enabled: true
-            }
+      client.indices.putMapping({_type: 'apples'}, {
+        apples: {
+          _timestamp: {
+            enabled: true
           }
         }
       }, function (err) {
         if (err) return done(err);
-        client.createMapping({
-          type: 'oranges',
-          data: {
-            oranges: {
-              _timestamp: {
-                enabled: true
-              }
+        client.indices.putMapping({_type: 'oranges'}, {
+          oranges: {
+            _timestamp: {
+              enabled: true
             }
           }
         }, done);
@@ -53,5 +40,5 @@ setUp = function (done) {
 };
 
 tearDown = function (done) {
-  client.deleteIndex(done);
+  client.indices.deleteIndex(done);
 };
