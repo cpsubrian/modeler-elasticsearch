@@ -1,12 +1,18 @@
 #!/usr/bin/env node
 var bench = require('bench')
   , stact = require('stact')
-  , size = 1000;
+  , size = 1000
+  , index = 'bench-' + Date.now();
 
-// Create ES client.
+// Create ES clients.
 var collection = require('../')({
   name: 'doodads',
-  index: 'bench-' + Date.now()
+  index: index
+});
+var mcollection = require('../')({
+  name: 'doodads',
+  index: index,
+  memcached: true
 });
 
 var client = collection.client;
@@ -48,7 +54,7 @@ exports.compare = {
     collection.load(Math.floor(Math.random() * size), done);
   },
   'Memcached': function (done) {
-    done();
+    mcollection.load(Math.floor(Math.random() * size), done);
   }
 };
 

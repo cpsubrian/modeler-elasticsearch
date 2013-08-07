@@ -5,6 +5,7 @@ modeler = require('../');
 index = 'modeler_elasticsearch_test_' + Date.now();
 client = new (require('../client'))({
   index: index,
+  memcached: true,
   refresh: {
     index: true,
     update: true,

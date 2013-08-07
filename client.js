@@ -1,6 +1,8 @@
 var formatUrl = require('url').format
+  , querystring = require('querystring')
   , request = require('request')
-  , retry = require('retry');
+  , retry = require('retry')
+  , Memcached = require('memcached');
 
 module.exports = ElasticSearchClient;
 
@@ -26,6 +28,12 @@ function ElasticSearchClient(options) {
     update: options.refresh.update || false,
     delete: options.refresh.delete || false
   };
+
+  if (options.memcached) {
+    self._memcachedHost = options.memcachedHost || self._host;
+    self._memcachedPort = options.memcachedPort || 11211;
+    self._memcached = new Memcached(self._memcachedHost + ':' + self._memcachedPort);
+  }
 }
 
 ElasticSearchClient.prototype.search = function (options, cb) {
@@ -145,13 +153,23 @@ ElasticSearchClient.prototype.refreshIndex = function (options, cb) {
 };
 
 ElasticSearchClient.prototype.exec = function (params, cb) {
+  if (this._memcached) {
+    this.execMemcached(params, cb);
+  }
+  else {
+    this.execREST(params, cb);
+  }
+};
+
+ElasticSearchClient.prototype.execREST = function (params, cb) {
   var self = this;
   var requestOptions = {
     uri: formatUrl({
       protocol: self._protocol,
       hostname: self._host,
       port: self._port,
-      pathname: params.path || '', auth: self._auth
+      pathname: params.path || '',
+      auth: self._auth
     }),
     method: params.method,
     headers: (params.data ? {
@@ -192,7 +210,7 @@ ElasticSearchClient.prototype.exec = function (params, cb) {
           }
         }
         if (resp.statusCode >=  400){
-          var msg = (body && body.error ? body.error : "Elastic Search response: " + resp.statusCode)
+          var msg = (body && body.error ? body.error : "Elastic Search response: " + resp.statusCode);
           var error = new Error(msg);
           error.statusCode = resp.statusCode;
           return cb(error, details);
@@ -208,4 +226,36 @@ ElasticSearchClient.prototype.exec = function (params, cb) {
       }
     });
   });
+};
+
+ElasticSearchClient.prototype.execMemcached = function (params, cb) {
+  if (params.method === 'GET') {
+    var query = params.qs || {};
+    if (params.data) {
+      query.source = params.data;
+    }
+    var key = formatUrl({
+      pathname: params.path || '',
+      auth: this._auth,
+      query: query
+    });
+    this._memcached.get(key, function (err, result) {
+      if (err) return cb(err);
+      try {
+        result = JSON.parse(result);
+        if (!result.exists) {
+          err = new Error('Does not exist');
+          err.statusCode = 404;
+          return cb(err);
+        }
+        cb(null, result);
+      }
+      catch (e) {
+        cb(e);
+      }
+    });
+  }
+  else {
+    this.execREST(params, cb);
+  }
 };
