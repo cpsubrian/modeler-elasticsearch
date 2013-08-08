@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 var bench = require('bench')
   , stact = require('stact')
+  , redis = require('redis').createClient()
   , size = 1000
   , index = 'bench-' + Date.now();
 
@@ -17,6 +18,11 @@ var mcollection = require('../')({
     _index: index,
   })
 });
+var rcollection = require('modeler-redis')({
+  name: 'doodads',
+  prefix: index,
+  client: redis
+});
 
 var client = collection.client;
 
@@ -32,8 +38,12 @@ client.indices.createIndex(function (err) {
     // Insert a bunch of models.
     console.log('Creating models ');
     var stack = stact(function (next) {
+      var data = this;
       process.stdout.write('.');
-      collection.create(this, next);
+      collection.create(data, function (err) {
+        if (err) return next(err);
+        rcollection.create(data, next);
+      });
     });
     for (var i=0; i<size; i++) {
       stack.add({id: i});
@@ -56,15 +66,25 @@ exports.compare = {
   },
   'elasticsearch-memcache': function (done) {
     mcollection.load(Math.floor(Math.random() * size), done);
+  },
+  'redis': function (done) {
+    rcollection.load(Math.floor(Math.random() * size), done);
   }
 };
 
 // Cleanup.
 exports.done = function (data) {
   client.indices.refresh(function (err) {
+    if (err) throw err;
     client.indices.deleteIndex({_index: index}, function (err) {
       if (err) throw err;
-      bench.show(data);
+      redis.keys(index + ':*', function (err, keys) {
+        if (err) throw err;
+        redis.del(keys, function (err) {
+          if (err) throw err;
+          bench.show(data);
+        });
+      });
     });
   });
 };

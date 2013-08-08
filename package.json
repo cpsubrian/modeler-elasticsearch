@@ -11,7 +11,9 @@
     "mocha": "*",
     "bench": "~0.3.5",
     "stact": "0.0.11",
-    "elasticsearch": "~0.3.7"
+    "elasticsearch": "~0.3.7",
+    "modeler-redis": "~0.3.1",
+    "redis": "~0.8.4"
   },
   "scripts": {
     "test": "make test"
