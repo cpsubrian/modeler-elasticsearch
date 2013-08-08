@@ -13,7 +13,7 @@ var collection = require('../')({
 });
 var mcollection = require('../')({
   name: 'doodads',
-  client: require('elasticsearch')({
+  client: require('elasticsearch-memcached')({
     _index: index,
   })
 });
