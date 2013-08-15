@@ -4,7 +4,18 @@ modeler = require('../');
 
 index = 'modeler_elasticsearch_test_' + Date.now();
 client = require('elasticsearch')({
-  _index: index
+  _index: index,
+  request: require('elasticsearch-memcached'),
+  server: {
+    memcached: {
+      host: 'localhost',
+      port: 11211
+    },
+    rest: {
+      host: 'localhost',
+      port: 9200
+    }
+  }
 });
 extraOptions = {
   client: client,

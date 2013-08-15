@@ -3,24 +3,37 @@ var bench = require('bench')
   , stact = require('stact')
   , redis = require('redis').createClient()
   , size = 1000
-  , index = 'bench-' + Date.now();
+  , index = 'bench-' + Date.now()
+  , elasticsearch = require('elasticsearch')
+  , memcached = require('elasticsearch-memcached');
 
 // Create ES clients.
 var collection = require('../')({
   name: 'doodads',
-  client: require('elasticsearch')({
+  client: elasticsearch.createClient({
     _index: index,
   })
 });
 var mcollection = require('../')({
   name: 'doodads',
-  client: require('elasticsearch-memcached')({
+  client: elasticsearch.createClient({
     _index: index,
+    request: memcached,
+    server: {
+      memcached: {
+        host: 'localhost',
+        port: 11211
+      },
+      rest: {
+        host: 'localhost',
+        port: 9200
+      }
+    }
   })
 });
 var rcollection = require('modeler-redis')({
   name: 'doodads',
-  prefix: index,
+  prefix: index + ':',
   client: redis
 });
 
@@ -50,7 +63,6 @@ client.indices.createIndex(function (err) {
     }
     stack.runSeries(function (err) {
       if (err) throw err;
-      console.log('');
       client.indices.refresh(function (err) {
         if (err) throw err;
         bench.runMain();
@@ -80,9 +92,14 @@ exports.done = function (data) {
       if (err) throw err;
       redis.keys(index + ':*', function (err, keys) {
         if (err) throw err;
+        if (!keys) {
+          bench.show(data);
+          process.exit();
+        }
         redis.del(keys, function (err) {
           if (err) throw err;
           bench.show(data);
+          process.exit();
         });
       });
     });
