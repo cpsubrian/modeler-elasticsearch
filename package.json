@@ -1,6 +1,6 @@
 {
   "name": "modeler-elasticsearch",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "ElasticSearch store for modeler.",
   "main": "modeler-elasticsearch.js",
   "dependencies": {
