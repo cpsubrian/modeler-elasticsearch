@@ -9,19 +9,19 @@ module.exports = function (_opts) {
   var api = modeler(_opts);
 
   api.client = api.options.client;
-  api.sort = api.options.sort || '_timestamp';
+  api.options.sort = api.options.sort || '_timestamp';
 
   // Refresh the index after all saves, really should only be used in tests.
-  api.refresh = api.options.refresh || false;
+  api.options.refresh = api.options.refresh || false;
 
   function continuable (offset, limit, dir, cb) {
     var sort = {};
-    sort[api.sort] = dir;
+    sort[api.options.sort] = dir;
     (function next () {
       api.client.search({_type: api.options.name}, {
         from: offset,
         size: limit,
-        fields: ['_id', api.sort],
+        fields: ['_id', api.options.sort],
         sort: [sort]
       }, function (err, results) {
         if (err) return cb(err);
@@ -69,7 +69,7 @@ module.exports = function (_opts) {
   };
 
   api._finish = function (cb) {
-    if (api.refresh) {
+    if (api.options.refresh) {
       api.client.indices.refresh(function (e) {
         cb(e);
       });
